@@ -1,60 +1,99 @@
-const tab1 = [];
-for (let i = 0; i < 12; i++) {
-    tab1.push(i); 
-}
-const tab2 = [...tab1, ...tab1];
+document.addEventListener('DOMContentLoaded', () => {
+    let seconds = 0;
+    let timer;
+    let tab1 = [];
+    let tab2 = [];
+    let container = document.querySelector('.container');
+    const timerElement = document.querySelector('.timer');
+    const winMessage = document.querySelector('.win-message');
+    const resetButton = document.querySelector('.reset-btn');  
+  
+    function startTimer() {
+      timer = setInterval(() => {
+        seconds++;
+        timerElement.textContent = `Temps écoulé : ${seconds}s`;
+      }, 1000);
+    }
+  
+    function stopTimer() {
+      clearInterval(timer);
+    }
+  
+    function melanger(tab) {
+      let tab2 = [];
+      for (let i = 0; i < tab.length; i++) {
+        let x;
+        do {
+          x = Math.floor(Math.random() * tab.length);
+        } while (tab2[x] != undefined);
+        tab2[x] = tab[i];
+      }
+      return tab2;
+    }
 
-function melanger(tab) {
-    return tab.sort(() => Math.random() - 0.5);
-}
+    function resetGame() {
+      stopTimer();
+      seconds = 0;
+      timerElement.textContent = `Temps écoulé : 0s`;
+  
+      winMessage.style.display = 'none';
 
-const tableauMelange = melanger(tab2);
+      container.innerHTML = '';
+  
+      tab1 = Array.from({ length: 12 }, (_, i) => i);
+      tab2 = melanger(tab1.concat(tab1));
+  
+      tab2.forEach((val) => {
+        const tile = document.createElement('div');
+        tile.classList.add('tile');
+        tile.innerHTML = `<img src="img/${val}.webp" alt="Tuile ${val}" />`;
+        container.appendChild(tile);
+      });
 
-console.log("Tableau mélangé:", tableauMelange);
+      startTimer();
+      firstTile = null;
+      secondTile = null;
+      isChecking = false;
+    }
+  
+    let firstTile = null;
+    let secondTile = null;
+    let isChecking = false;
 
-let memory = null;
-let memoryIndex = null;
-let one = null;
+    resetGame();
+    container.addEventListener('click', (event) => {
+      const clickedTile = event.target.closest('.tile');
+  
+      if (!clickedTile || clickedTile.classList.contains('matched') || isChecking) return;
+  
+      clickedTile.classList.add('flipped');
+  
+      if (!firstTile) {
+        firstTile = clickedTile;
+      } else if (!secondTile) {
+        secondTile = clickedTile;
+  
+        isChecking = true;
+        setTimeout(() => {
+          if (firstTile.innerHTML === secondTile.innerHTML) {
+            firstTile.classList.add('matched');
+            secondTile.classList.add('matched');
+          } else {
+            firstTile.classList.remove('flipped');
+            secondTile.classList.remove('flipped');
+          }
+  
+          firstTile = null;
+          secondTile = null;
+          isChecking = false;
 
-function gestionCarte() {
-    const container = document.querySelector('.container');
-    container.innerHTML = ''; 
-
-    tableauMelange.forEach((item, i) => {
-        const div = document.createElement('div');
-        const img = document.createElement('img');
-        
-        img.src = `/tpmemory/img/${item}.webp`;
-        img.className = "img-button";
-        img.style.cursor = 'pointer';
-
-        img.onclick = (event) => {
-            if (memory === null) {
-                memory = event.target.src;
-                memoryIndex = i;
-                one = event.target;
-                event.target.parentElement.classList.add("green");
-            } else {
-                if (memory === event.target.src && one !== event.target) {
-                    event.target.parentElement.classList.add("green");
-                    one.remove();
-                    event.target.remove();
-                    memory = null;
-                    memoryIndex = null;
-                    one = null;
-                } else {
-                    event.target.parentElement.classList.add("green");
-                    memory = null;
-                    memoryIndex = null;
-                    one = null;
-                    one.parentElement.classList.remove('green');
-                    event.target.parentElement.classList.remove('green');
-                }
-            }
-        };
-
-        div.appendChild(img);
-        container.appendChild(div);
+          if (document.querySelectorAll('.matched').length === tab2.length) {
+            winMessage.style.display = 'block'; 
+          }
+        }, 1000);
+      }
     });
-}
-gestionCarte();
+    resetButton.addEventListener('click', resetGame);
+  });
+  
+  
